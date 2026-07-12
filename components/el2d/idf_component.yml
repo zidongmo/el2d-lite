@@ -1,0 +1,5 @@
+version: "0.1.0"
+description: EL2D Lite embedded deformable-mesh runtime and RGB565 renderer.
+license: Apache-2.0
+targets:
+  - esp32s3

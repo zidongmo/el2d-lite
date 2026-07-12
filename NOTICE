@@ -1,0 +1,9 @@
+EL2D Lite
+Copyright 2026 EL2D Lite contributors
+
+This product includes a vendored subset of meshoptimizer, Copyright (c)
+2016-2026 Arseny Kapoulkine, distributed under the MIT License. Its license
+and pinned source revision are recorded in third_party/meshoptimizer/.
+
+Live2D and Cubism are trademarks or registered trademarks of Live2D Inc.
+This project is independent and is not affiliated with or endorsed by Live2D Inc.

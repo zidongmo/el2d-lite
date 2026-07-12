@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ESP Live2D Lite Official Cubism Extractor</title>
+</head>
+<body>
+  <canvas id="stage" width="32" height="32"></canvas>
+  <script>
+    const query = new URLSearchParams(window.location.search);
+    const runtimeDir = query.get('runtimeDir');
+    if (!runtimeDir) {
+      throw new Error('runtimeDir query parameter is required');
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`failed to load ${src}`));
+        document.head.append(script);
+      });
+    }
+
+    function cubismIdToString(value) {
+      if (typeof value === 'string') {
+        return value;
+      }
+      return value?.s || value?._id || String(value);
+    }
+
+    function roundedArray(values) {
+      return Array.from(values, (value) => Number(Number(value).toFixed(6)));
+    }
+
+    window.el2dRuntimeReady = (async () => {
+      await loadScript(`${runtimeDir}/live2dcubismcore.min.js`);
+      await loadScript(`${runtimeDir}/pixi.min.js`);
+      await loadScript(`${runtimeDir}/pixi-live2d-display-cubism4.min.js`);
+      window.el2dExtractorReady = true;
+    })();
+
+    window.el2dExtractOfficialCubismDrawables = async (options) => {
+      await window.el2dRuntimeReady;
+      if (!window.PIXI?.live2d?.Live2DModel) {
+        throw new Error('Cubism Web runtime missing');
+      }
+
+      const canvas = document.querySelector('#stage');
+      const app = new PIXI.Application({
+        view: canvas,
+        width: canvas.width,
+        height: canvas.height,
+        backgroundAlpha: 0,
+        preserveDrawingBuffer: false,
+        antialias: false,
+        autoDensity: false,
+        resolution: 1,
+      });
+      const model = await PIXI.live2d.Live2DModel.from(options.modelUrl, { autoInteract: false });
+      app.stage.addChild(model);
+
+      const core = model.internalModel.coreModel;
+      for (const [id, value] of Object.entries(options.parameters || {})) {
+        core.setParameterValueById(id, Number(value), 1);
+      }
+      for (const expression of options.expressions || []) {
+        const id = expression.Id;
+        const value = Number(expression.Value || 0);
+        const blend = expression.Blend || 'Add';
+        if (blend === 'Multiply') {
+          core.multiplyParameterValueById(id, value, 1);
+        } else if (blend === 'Overwrite') {
+          core.setParameterValueById(id, value, 1);
+        } else {
+          core.addParameterValueById(id, value, 1);
+        }
+      }
+      for (const [id, value] of Object.entries(options.postParameters || {})) {
+        core.setParameterValueById(id, Number(value), 1);
+      }
+      for (const [id, value] of Object.entries(options.partOpacities || {})) {
+        core.setPartOpacityById(id, Number(value));
+      }
+      core.update();
+
+      const ids = core.getDrawableIds();
+      const renderOrders = Array.from(core.getDrawableRenderOrders());
+      const maskCounts = Array.from(core.getDrawableMaskCounts());
+      const masks = core.getDrawableMasks();
+      const drawables = [];
+      const count = core.getDrawableCount();
+      for (let index = 0; index < count; index += 1) {
+        const positions = core.getDrawableVertexPositions(index);
+        const uvs = core.getDrawableVertexUvs(index);
+        const indices = core.getDrawableVertexIndices(index);
+        const maskCount = maskCounts[index] || 0;
+        drawables.push({
+          index,
+          id: cubismIdToString(ids[index]),
+          texture_index: core.getDrawableTextureIndices(index),
+          render_order: renderOrders[index],
+          opacity: Number(core.getDrawableOpacity(index).toFixed(6)),
+          culling: core.getDrawableCulling(index),
+          blend_mode: core.getDrawableBlendMode(index),
+          visible: core.getDrawableDynamicFlagIsVisible(index),
+          vertex_count: core.getDrawableVertexCount(index),
+          index_count: core.getDrawableVertexIndexCount(index),
+          positions: roundedArray(positions),
+          uvs: roundedArray(uvs),
+          indices: Array.from(indices),
+          masks: Array.from(masks[index] || []).slice(0, maskCount),
+        });
+      }
+
+      app.destroy(true);
+      return {
+        format: 'el2d-lite.drawable-snapshot',
+        format_version: 1,
+        backend: 'official_cubism_web_runtime',
+        model_name: options.modelName,
+        model3: options.modelUrl,
+        coordinate_space: 'cubism_normalized',
+        parameter_overrides: options.parameters || {},
+        expression_overrides: options.expressions || [],
+        post_parameter_overrides: options.postParameters || {},
+        part_opacity_overrides: options.partOpacities || {},
+        drawable_count: drawables.length,
+        drawables,
+        notes: [
+          'Generated by offline conversion only.',
+          'The generated snapshot contains model geometry data, not the official runtime.',
+        ],
+      };
+    };
+  </script>
+</body>
+</html>
