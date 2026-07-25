@@ -18,7 +18,7 @@
 python converter\el2d_converter.py path\to\Avatar.model3.json --output build\avatar.el2d --drawable-snapshot build\avatar.base.drawables.json
 ```
 
-如果没有 snapshot，drawable extraction 会标记为 `deferred`。未来 PurismCore 等后端可以输出相同 snapshot schema，而无需进入 ESP runtime。
+如果没有 snapshot，drawable extraction 会标记为 `deferred`。未来 PurismCore 等后端可以输出相同 snapshot schema，而无需将后端链接进 ESP runtime。
 
 ## English
 
@@ -36,4 +36,4 @@ The current `.el2d` output is an intermediate interchange directory, not a stabl
 python converter\el2d_converter.py path\to\Avatar.model3.json --output build\avatar.el2d --drawable-snapshot build\avatar.base.drawables.json
 ```
 
-Without a snapshot, drawable extraction is marked as `deferred`. Future backends such as PurismCore can emit the same snapshot schema without entering the ESP runtime.
+Without a snapshot, drawable extraction is marked as `deferred`. Future backends such as PurismCore can emit the same snapshot schema without linking the backend into the ESP runtime.
