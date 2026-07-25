@@ -10,7 +10,7 @@
 
 ### 项目状态
 
-当前版本是 `0.1.0-dev` 技术预览，已经在 ESP32-S3 真机上完成胸像模型、多网格遮罩、状态补间、快速眨眼和口型叠加验证。运行时 API 和生成资产 ABI 在 `0.1.0` 前仍可能调整。
+当前发布线是 `0.1.0` 技术预览：CMake 项目和 ESP-IDF 组件元数据使用 `0.1.0`，Python 工具包在打包流程稳定前使用 `0.1.0.dev0`。项目已经在 ESP32-S3 真机上完成胸像模型、多网格遮罩、状态补间、快速眨眼和口型叠加验证。作为 `0.x` 阶段项目，运行时 API 和生成资产 ABI 可能在后续次版本中调整。
 
 这不是把桌面 SDK 缩小后直接塞进 ESP32。当前可工作的工程路径是：
 
@@ -141,7 +141,7 @@ A lightweight 2D deformable-mesh runtime for resource-constrained devices such a
 
 ### Project Status
 
-The current version is a `0.1.0-dev` technical preview. It has been validated on physical ESP32-S3 hardware with a bust model, multi-mesh masks, state tweening, rapid blinking, and lip-sync overlays. The runtime API and generated asset ABI may still change before `0.1.0`.
+The current release line is a `0.1.0` technical preview: the CMake project and ESP-IDF component metadata use `0.1.0`, while the Python tools package uses `0.1.0.dev0` until its packaging workflow stabilizes. The project has been validated on physical ESP32-S3 hardware with a bust model, multi-mesh masks, state tweening, rapid blinking, and lip-sync overlays. As a `0.x` project, the runtime API and generated asset ABI may change in later minor releases.
 
 This is not a desktop SDK scaled down and placed directly on an ESP32. The currently supported workflow is:
 

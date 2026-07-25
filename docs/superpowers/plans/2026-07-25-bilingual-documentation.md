@@ -1,10 +1,10 @@
-# EL2D Lite Bilingual Documentation Implementation Plan
-
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+# EL2D Lite 双语文档实施计划 / Bilingual Documentation Implementation Plan
 
 [中文](#中文) | [English](#english)
 
 ## 中文
+
+> **供自动化执行者：** 必需子技能：使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 逐项实施本计划。步骤使用 checkbox（`- [ ]`）语法跟踪。
 
 **目标：** 将全部自有 Markdown 文档改为同一文件内中文和英文完整镜像的 GitHub 友好格式。
 
@@ -51,6 +51,8 @@
 - [ ] 提交并推送 `main`。
 
 ## English
+
+> **For agentic workers:** Required sub-skill: use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task by task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Convert every first-party Markdown document to a GitHub-friendly single-file layout containing complete, mirrored Chinese and English content.
 
