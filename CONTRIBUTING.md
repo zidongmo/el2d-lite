@@ -48,8 +48,8 @@ python tools\audit_public_tree.py .
 - Add a failing test for new behavior before implementing the smallest necessary change.
 - Keep the runtime API C11-compatible and independent of business logic; do not add product-state, LCD, or network dependencies.
 - Performance optimizations must record the device, compiler options, model size, and P50/P95 figures; do not submit only a best-case single-frame result.
-- Test converter features with temporarily generated synthetic fixtures.
-- Do not submit models, the official runtime, model-derived assets, or external product code.
+- Test converter features with synthetic fixtures generated on demand in temporary directories.
+- Do not submit models, the official runtime, generated assets derived from models, or external product code.
 - New third-party dependencies must document their license, upstream URL, pinned revision, and the reason for not using a system library.
 
 Conventional Commits are recommended for commit messages, for example `feat: add binary asset bounds checks` or `fix: preserve mask topology during lod`.

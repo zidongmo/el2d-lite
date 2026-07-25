@@ -143,7 +143,7 @@ A lightweight 2D deformable-mesh runtime for resource-constrained devices such a
 
 The current version is a `0.1.0-dev` technical preview. It has been validated on physical ESP32-S3 hardware with a bust model, multi-mesh masks, state tweening, rapid blinking, and lip-sync overlays. The runtime API and generated asset ABI may still change before `0.1.0`.
 
-This is not a desktop SDK scaled down and placed directly on an ESP32. The current working engineering flow is:
+This is not a desktop SDK scaled down and placed directly on an ESP32. The currently supported workflow is:
 
 ```text
 User-supplied model and local evaluation backend
@@ -175,7 +175,7 @@ Local ESP32 tweening, expression-delta layering, masks, and RGB565 rasterization
 ### Explicitly Not Included
 
 - The Live2D Cubism SDK, Cubism Core, the official Web runtime, and their binaries are not included.
-- Haru and all other models, textures, motions, expressions, and model-derived generated assets are not included.
+- Haru and all other models, textures, motions, expressions, and generated assets derived from models are not included.
 - The ESP32 runtime does not currently parse `.moc3` files directly; the device consumes static C assets generated on a PC.
 - The `.el2d` directory currently stores conversion metadata and intermediate interchange data. It is not a stable device-side binary package format.
 - Screen drivers, network streaming, robot application states, and product action scheduling are not included.
@@ -190,7 +190,7 @@ The following figures come from an external product integration, not a synthetic
 | Continuous lip-sync redraw P50/P95 | 56/57 ms |
 | Application-level stable-frame cache hit | 4-5 ms |
 
-Cache hits are a scheduling optimization in the external application; the runtime itself retains deterministic local mesh rendering. Actual performance depends on model coverage, alpha blending, mask count, Flash/PSRAM configuration, and the LCD transfer method.
+Cache hits come from scheduling optimizations in the external application; the runtime itself renders meshes locally and deterministically. Actual performance depends on model coverage, alpha blending, mask count, Flash/PSRAM configuration, and the LCD transfer method.
 
 ### Quick Start
 
@@ -254,7 +254,7 @@ docs/                  Architecture, asset pipeline, and licensing boundaries
 
 See the [architecture documentation](docs/architecture.md) for architecture and ownership boundaries.
 
-### PurismCore
+### PurismCore (English)
 
 [PurismCore](https://github.com/SakuraMotion/PurismCore) is an optional MIT-licensed reimplementation of the Core. This repository provides layout checks and a build probe, but does not currently vendor it or designate it as the default production extraction backend. Point `EL2D_PURISMCORE_DIR` to a local checkout to build the probe.
 
