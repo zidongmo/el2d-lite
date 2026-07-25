@@ -69,7 +69,7 @@ cmake --build build --config Release --target el2d_mesh_simplify
 --optimized-snapshot-dir build/optimized
 ```
 
-自适应 profile 锁定 ArtMesh 边界，并把 base 与所有状态采样的位置、UV 一起放进误差度量。若在边界保护条件下达不到预算，报告写入 `budget_met=false`，调用方应调整裁剪范围或预算，而不是接受明显轮廓破坏。
+自适应 profile 锁定 ArtMesh 边界，并把 base 与所有状态采样的位置、UV 一起放进误差度量。若在边界保护条件下无法达到预算，生成器会抛出 `ValueError` 并在输出最终 JSON 报告前停止。调用方应提高 `--lod-target-triangles`，或调整输入 drawable 或裁剪策略（包括选择合适的 `--crop-profile`）后重试，而不是接受明显轮廓破坏。
 
 `--crop-profile bust` 是通用 drawable 级胸像裁剪启发式。它适合做首轮自动预算，但必须通过 host preview 和真机验收确认没有错误删除发型、手部或遮罩源。
 
@@ -77,7 +77,7 @@ cmake --build build --config Release --target el2d_mesh_simplify
 
 每套资产至少执行：
 
-1. 检查转换报告中的总/可见三角形、纹理字节数和 `budget_met`。
+1. 检查成功转换报告中的总/可见三角形。纹理内存可按每张转换后纹理的 `width × height × (2 + 0.5)` bytes 求和估算（RGB565 为 2 bytes/pixel，alpha4 为 0.5 bytes/pixel），或从生成资产中的 RGB565/alpha4 数组统计。
 2. 在 Host 使用同一 RGB565 rasterizer 生成状态与补间预览。
 3. 验证遮罩眼睛、头发边界、手部层级和透明混合。
 4. 真机记录非缓存 render P50/P95、稳定帧命中、PSRAM 占用和 LCD 传输耗时。
@@ -154,7 +154,7 @@ Then add the following parameters to the generator:
 --optimized-snapshot-dir build/optimized
 ```
 
-The adaptive profile locks ArtMesh boundaries and includes positions and UVs from the base and all state samples in the error metric. If the budget cannot be reached while protecting the boundaries, the report records `budget_met=false`. The caller should adjust the crop bounds or budget instead of accepting visible silhouette damage.
+The adaptive profile locks ArtMesh boundaries and includes positions and UVs from the base and all state samples in the error metric. If the budget cannot be reached while preserving the boundaries, the generator raises `ValueError` and stops before emitting the final JSON report. The caller should raise `--lod-target-triangles` or revise the input drawables or cropping strategy, including selecting an appropriate `--crop-profile`, and retry instead of accepting visible silhouette damage.
 
 `--crop-profile bust` is a general-purpose, drawable-level heuristic for bust cropping. It is suitable for a first automated budgeting pass, but host preview and on-device acceptance testing must confirm that it has not incorrectly removed hair, hands, or mask sources.
 
@@ -162,7 +162,7 @@ The adaptive profile locks ArtMesh boundaries and includes positions and UVs fro
 
 For every asset set, perform at least the following checks:
 
-1. Inspect the total and visible triangle counts, texture byte count, and `budget_met` value in the conversion report.
+1. Inspect the total and visible triangle counts in the successful conversion report. Estimate texture memory by summing `width × height × (2 + 0.5)` bytes for each converted texture (RGB565 at 2 bytes/pixel and alpha4 at 0.5 bytes/pixel), or derive it from the RGB565/alpha4 arrays in the generated asset.
 2. On the host, use the same RGB565 rasterizer to generate previews of states and interpolated transitions.
 3. Verify masked eyes, hair boundaries, hand layering, and alpha blending.
 4. On the device, record uncached render P50/P95, stable-frame cache hits, PSRAM usage, and LCD transfer time.
