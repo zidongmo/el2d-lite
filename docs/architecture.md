@@ -38,7 +38,7 @@ flowchart TD
 
 #### Mesh renderer（中文）
 
-`include/el2d/mesh_renderer.h` 定义纹理、drawable、model、camera、expression layer 与 render context。状态补间要求两套模型具有相同 drawable 顺序、顶点数、索引、UV 和遮罩关系。
+`include/el2d/mesh_renderer.h` 定义纹理、drawable、model、camera、expression layer 与 render context。状态补间要求两套模型具有相同 drawable 顺序、顶点数、索引、UV、对应 drawable 的 `texture_index` 和遮罩关系。
 
 基础状态与增量表情的组合公式只适用于顶点位置：
 
@@ -139,7 +139,7 @@ This layer is not part of the repository core. It maps product state to `from_mo
 
 #### Mesh Renderer (English)
 
-`include/el2d/mesh_renderer.h` defines textures, drawables, models, cameras, expression layers, and render contexts. State interpolation requires both models to have identical drawable order, vertex counts, indices, UVs, and mask relationships.
+`include/el2d/mesh_renderer.h` defines textures, drawables, models, cameras, expression layers, and render contexts. State interpolation requires both models to have identical drawable order, vertex counts, indices, UVs, corresponding drawable `texture_index` values, and mask relationships.
 
 The base state and additive expressions are combined as follows for vertex positions only:
 
