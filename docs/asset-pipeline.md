@@ -18,7 +18,20 @@
 - 一个本地可用、授权允许当前用途的 drawable 求值后端。
 - 用于最终固件的状态采样列表与参数值。
 
-官方 Web runtime 路径仅在本机读取。提取器使用只映射 model、runtime 和 host page 三个显式根目录的临时 HTTP server，不把整个工作盘暴露给浏览器。
+`Playwright` 未列入本项目 `pyproject.toml` 的依赖。运行提取器前必须显式安装 Python 包及 Chromium：
+
+```powershell
+python -m pip install playwright
+python -m playwright install chromium
+```
+
+`--runtime-dir` 目录必须直接包含以下三个精确文件名：
+
+- `live2dcubismcore.min.js`：用户本地提供的官方 Cubism Core for Web 文件，来源于官方 Cubism SDK for Web 包。
+- `pixi.min.js`：用户本地提供的 PixiJS 浏览器 bundle。
+- `pixi-live2d-display-cubism4.min.js`：用户本地提供的 pixi-live2d-display Cubism 4 浏览器 bundle。
+
+`tools/official_cubism_extractor.html` 按上述字面文件名加载脚本，不会自动发现其他名称；本文不指定版本。`--runtime-dir` 仅在本机读取。提取器使用只映射 model、runtime 和 host page 三个显式根目录的临时 HTTP server，不把整个工作盘暴露给浏览器。
 
 ### 2. 提取基础快照（中文）
 
@@ -42,13 +55,15 @@ python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --r
 python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --expression Smile --post-parameter ParamEyeLOpen=1 --post-parameter ParamEyeROpen=1 --output build\avatar.smile.drawables.json
 ```
 
-生成器会检查所有状态快照与 base 的 drawable、顶点、索引和 UV 兼容性。拓扑不一致时转换失败，不静默生成破损补间。
+生成器的 `adaptive` 路径会在减面前显式检查 state 与 base 的 drawable 数量和顺序（通过对应 id）、顶点/索引数量、索引数组及 UV，但该检查不比较遮罩关系。`none` 路径不做这些跨快照兼容性检查。调用方必须在生成前保证未由所选路径检查的项目以及 runtime 要求的遮罩关系兼容，否则可能生成无法正确补间的资产。
 
 ### 4. 纹理量化与静态资产（中文）
 
 ```powershell
-python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512
+python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512 --lod-profile none
 ```
+
+上例显式选择 `--lod-profile none`，因此不提供上述跨快照防护，只适用于调用方已经完成兼容性检查的输入。若要由工具执行上述 `adaptive` 兼容性检查，先构建 host helper，再改用第 5 节的 `adaptive` 参数；遮罩关系仍由调用方检查。
 
 每张纹理转换为 RGB565 color plane（2 bytes/pixel）与 alpha4 plane（2 pixels/byte）。静态 C 生成物通常很大，而且可能是模型派生数据。它应由产品仓库或私有构建保存，不应默认提交到本项目。
 
@@ -103,7 +118,20 @@ Users must provide:
 - A locally available drawable-evaluation backend whose license permits the intended use.
 - The list of state samples and parameter values for the final firmware.
 
-The official Web runtime path is read only from the local machine. The extractor uses a temporary HTTP server that maps only three explicit roots for the model, runtime, and host page; it does not expose the entire working drive to the browser.
+`Playwright` is not listed as a dependency in this project's `pyproject.toml`. Before running the extractor, explicitly install the Python package and Chromium:
+
+```powershell
+python -m pip install playwright
+python -m playwright install chromium
+```
+
+The `--runtime-dir` directory must directly contain these three exact filenames:
+
+- `live2dcubismcore.min.js`: the user-provided official Cubism Core for Web file from the official Cubism SDK for Web package.
+- `pixi.min.js`: the user-provided PixiJS browser bundle.
+- `pixi-live2d-display-cubism4.min.js`: the user-provided pixi-live2d-display Cubism 4 browser bundle.
+
+`tools/official_cubism_extractor.html` loads scripts by these literal filenames and does not discover alternative names automatically; this document does not specify versions. `--runtime-dir` is read only from the local machine. The extractor uses a temporary HTTP server that maps only three explicit roots for the model, runtime, and host page; it does not expose the entire working drive to the browser.
 
 ### 2. Extract the Base Snapshot (English)
 
@@ -127,13 +155,15 @@ Expressions can be applied by name from `.model3.json`, with fast-path parameter
 python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --expression Smile --post-parameter ParamEyeLOpen=1 --post-parameter ParamEyeROpen=1 --output build\avatar.smile.drawables.json
 ```
 
-The generator checks every state snapshot against the base for compatibility of drawables, vertices, indices, and UVs. Conversion fails when topology is inconsistent instead of silently generating broken interpolation.
+The generator's `adaptive` path explicitly checks each state against the base before simplification for drawable count and order (through corresponding IDs), vertex and index counts, index arrays, and UVs, but this check does not compare mask relationships. The `none` path does not perform these cross-snapshot compatibility checks. Before generation, the caller must guarantee that items not checked by the selected path and the mask relationships required by the runtime are compatible; otherwise, the generated assets may not interpolate correctly.
 
 ### 4. Quantize Textures and Generate Static Assets (English)
 
 ```powershell
-python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512
+python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512 --lod-profile none
 ```
+
+The example explicitly selects `--lod-profile none`, so it does not provide the cross-snapshot safeguards described above and is suitable only for inputs whose compatibility the caller has already checked. To have the tool perform the `adaptive` compatibility checks described above, first build the host helper and then use the `adaptive` parameters in Section 5; mask relationships remain the caller's responsibility.
 
 Each texture is converted into an RGB565 color plane (2 bytes/pixel) and an alpha4 plane (2 pixels/byte). Generated static C assets are usually large and may contain model-derived data. They should be stored in the product repository or a private build and should not be committed to this project by default.
 

@@ -20,12 +20,12 @@ EL2D Lite 将“模型离线求值”和“设备实时显示”分开。PC 处�
 
 ```mermaid
 flowchart TD
-    A["Application adapter<br/>state policy, timing, cache, LCD"] --> B["EL2D runtime<br/>parameters, clips, expression weights"]
-    B --> C["Mesh renderer<br/>camera, interpolation, masks"]
-    C --> D["RGB565 rasterizer<br/>scanlines, alpha, clipping"]
-    E["Generated static assets<br/>textures, drawables, snapshots"] --> C
-    F["PC asset pipeline<br/>extract, quantize, simplify, generate"] --> E
-    G["User-supplied model/runtime"] --> F
+    A["应用适配层<br/>状态策略、计时、缓存、LCD"] --> B["EL2D 运行时<br/>参数、片段、表情权重"]
+    B --> C["网格渲染器<br/>相机、补间、遮罩"]
+    C --> D["RGB565 光栅器<br/>扫描线、透明度、裁剪"]
+    E["生成的静态资产<br/>纹理、可绘制对象、快照"] --> C
+    F["PC 资产管线<br/>提取、量化、减面、生成"] --> E
+    G["用户提供的模型/运行时"] --> F
 ```
 
 #### Application adapter（中文）
@@ -40,12 +40,14 @@ flowchart TD
 
 `include/el2d/mesh_renderer.h` 定义纹理、drawable、model、camera、expression layer 与 render context。状态补间要求两套模型具有相同 drawable 顺序、顶点数、索引、UV 和遮罩关系。
 
-基础状态与增量表情的组合公式是：
+基础状态与增量表情的组合公式只适用于顶点位置：
 
 ```text
-base = lerp(state_from, state_to, state_progress)
-final = base + sum((expression_target - expression_reference) * weight)
+base_position = lerp(state_from_position, state_to_position, state_progress)
+final_position = base_position + sum((expression_target_position - expression_reference_position) * weight)
 ```
+
+drawable 的 opacity 只在基础状态的 `from_model` 与 `to_model` 之间插值，不受 expression layer 叠加；不可见的基础 drawable 按 opacity 0 参与插值。
 
 因此身体可以用 2-3 秒平滑过渡，同时眨眼和口型仍按几十到几百毫秒的独立 envelope 变化。
 
@@ -63,18 +65,20 @@ final = base + sum((expression_target - expression_reference) * weight)
 | --- | --- | --- |
 | `el2d_mesh_model` 与纹理数组 | 生成资产/应用 | 通常为整个固件生命周期 |
 | RGB565 framebuffer | 应用 | 至少覆盖一次 render 和显示传输 |
-| `el2d_mesh_render_context` | 应用 | 可跨帧复用，减少重复分配和遮罩构建 |
+| `el2d_mesh_render_context` | 应用 | 可跨帧复用已分配的工作内存；不跨帧复用遮罩覆盖结果 |
 | transition/clip 参数 | 应用或 runtime model | 由应用时钟更新 |
 | LCD 句柄与 DMA buffer | 应用 | 核心不可见 |
 
 所有静态 model 指针在一次 render 内必须有效。调用方不得在 render 进行时修改纹理、索引或顶点数组。
+
+render context 跨帧保留已分配的顶点、位置和遮罩位图工作内存，以减少重复分配。每次 render 仍会重建所需的遮罩覆盖；只有同一次 render 内使用相同 mask set 的 drawable 才共享该覆盖结果。
 
 ### 帧生命周期（中文）
 
 1. 应用读取单调时钟并更新业务状态机。
 2. 业务 adapter 计算通用 transition progress、camera 和表情权重。
 3. 应用判断量化后的输入是否改变；稳定帧缓存可在这里直接命中。
-4. 运行时清理目标区域、变换顶点、构建/复用遮罩并光栅化 drawable。
+4. 运行时清理目标区域、变换顶点、构建遮罩（同一帧内复用相同 mask set）并光栅化 drawable。
 5. 应用把 RGB565 framebuffer 或脏区发送给 LCD。
 
 运行时不主动限帧。面部 envelope 的 attack/release、随机眨眼间隔和口型采样频率均是应用策略。
@@ -137,12 +141,14 @@ This layer is not part of the repository core. It maps product state to `from_mo
 
 `include/el2d/mesh_renderer.h` defines textures, drawables, models, cameras, expression layers, and render contexts. State interpolation requires both models to have identical drawable order, vertex counts, indices, UVs, and mask relationships.
 
-The base state and additive expressions are combined as follows:
+The base state and additive expressions are combined as follows for vertex positions only:
 
 ```text
-base = lerp(state_from, state_to, state_progress)
-final = base + sum((expression_target - expression_reference) * weight)
+base_position = lerp(state_from_position, state_to_position, state_progress)
+final_position = base_position + sum((expression_target_position - expression_reference_position) * weight)
 ```
+
+Drawable opacity is interpolated only between the base-state `from_model` and `to_model`; expression layers do not modify it. An invisible base drawable participates in this interpolation with opacity 0.
 
 The body can therefore transition smoothly over 2-3 seconds while blinks and mouth shapes continue to follow independent envelopes lasting tens to hundreds of milliseconds.
 
@@ -160,18 +166,20 @@ The body can therefore transition smoothly over 2-3 seconds while blinks and mou
 | --- | --- | --- |
 | `el2d_mesh_model` and texture arrays | Generated assets/application | Usually the full firmware lifetime |
 | RGB565 framebuffer | Application | At least one render and display transfer |
-| `el2d_mesh_render_context` | Application | Reusable across frames to reduce repeated allocations and mask construction |
+| `el2d_mesh_render_context` | Application | Reuses allocated working memory across frames; does not reuse mask coverage across frames |
 | transition/clip parameters | Application or runtime model | Updated by the application clock |
 | LCD handle and DMA buffer | Application | Not visible to the core |
 
 All static model pointers must remain valid for the duration of a render. The caller must not modify texture, index, or vertex arrays while rendering is in progress.
+
+The render context retains allocated vertex, position, and mask-bitmap working memory across frames to reduce repeated allocations. Each render still rebuilds the required mask coverage; only drawables that use the same mask set within that render share the coverage result.
 
 ### Frame Lifecycle (English)
 
 1. The application reads a monotonic clock and updates its application state machine.
 2. The application adapter calculates general-purpose transition progress, camera, and expression weights.
 3. The application checks whether the quantized inputs have changed; the stable-frame cache can return a hit at this point.
-4. The runtime clears the target region, transforms vertices, builds or reuses masks, and rasterizes drawables.
+4. The runtime clears the target region, transforms vertices, builds masks (reusing identical mask sets within the frame), and rasterizes drawables.
 5. The application sends the RGB565 framebuffer or dirty region to the LCD.
 
 The runtime does not impose a frame-rate limit. Facial-envelope attack/release, randomized blink intervals, and mouth-shape sampling frequency are all application policies.

@@ -31,9 +31,12 @@ PurismCore 的开源许可不自动改变输入模型、编辑器输出或 Live2
 ### 官方资料（中文）
 
 - [Live2D SDK licensing](https://www.live2d.com/en/sdk/license/)
+- [Live2D Proprietary Software License Agreement](https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html)
 - [Live2D Open Software License](https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html)
 - [Live2D sample data terms](https://www.live2d.com/en/learn/sample/model-terms/)
 - [Live2D Free Material License](https://www.live2d.com/eula/live2d-free-material-license-agreement_en.html)
+
+官方协议页面将 Live2D Cubism Core 列为 Live2D Proprietary Software License Agreement 的适用软件，将 Live2D Cubism Components 列为 Live2D Open Software License Agreement 的适用软件。本文只记录该官方分类，不判断具体文件、版本或用途适用哪份许可。
 
 不要仅因为仓库不再分发官方文件，就推断最终应用一定不需要额外许可。嵌入式发布、商业主体、可扩展应用和模型再分发可能有不同要求。
 
@@ -80,9 +83,12 @@ PurismCore's open-source license does not automatically change the licensing sta
 ### Official Resources (English)
 
 - [Live2D SDK licensing](https://www.live2d.com/en/sdk/license/)
+- [Live2D Proprietary Software License Agreement](https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html)
 - [Live2D Open Software License](https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html)
 - [Live2D sample data terms](https://www.live2d.com/en/learn/sample/model-terms/)
 - [Live2D Free Material License](https://www.live2d.com/eula/live2d-free-material-license-agreement_en.html)
+
+The official agreement pages list Live2D Cubism Core as applicable software under the Live2D Proprietary Software License Agreement and Live2D Cubism Components as applicable software under the Live2D Open Software License Agreement. This document records only that official classification; it does not determine which license applies to a specific file, version, or use.
 
 Do not infer that a final application necessarily requires no additional license merely because this repository no longer distributes official files. Embedded distribution, commercial entities, extensible applications, and model redistribution may be subject to different requirements.
 
