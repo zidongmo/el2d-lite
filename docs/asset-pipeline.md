@@ -1,12 +1,16 @@
-# 资产管线
+[中文](#中文) | [English](#english)
 
-## 原则
+# 中文
+
+## 资产管线（中文）
+
+### 原则（中文）
 
 资产管线必须可重复执行，不能依赖逐张手工修图或逐顶点人工调整。所有裁剪、纹理尺寸、状态采样、减面预算和误差阈值都通过命令行参数或可版本化 profile 表达。
 
 模型授权检查是管线的第零步。仓库示例只使用测试动态生成的合成数据。
 
-## 1. 准备输入
+### 1. 准备输入（中文）
 
 需要用户自行提供：
 
@@ -16,7 +20,7 @@
 
 官方 Web runtime 路径仅在本机读取。提取器使用只映射 model、runtime 和 host page 三个显式根目录的临时 HTTP server，不把整个工作盘暴露给浏览器。
 
-## 2. 提取基础快照
+### 2. 提取基础快照（中文）
 
 ```powershell
 python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --motion-initial Idle:0 --output build\avatar.base.drawables.json
@@ -24,7 +28,7 @@ python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --r
 
 输出包含 drawable id、顶点、UV、索引、render order、texture index、opacity、culling、blend mode 和 mask 关系。
 
-## 3. 自动采样状态与表情
+### 3. 自动采样状态与表情（中文）
 
 状态快照使用同一模型和同一拓扑，只改变参数求值后的顶点/透明度：
 
@@ -40,7 +44,7 @@ python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --r
 
 生成器会检查所有状态快照与 base 的 drawable、顶点、索引和 UV 兼容性。拓扑不一致时转换失败，不静默生成破损补间。
 
-## 4. 纹理量化与静态资产
+### 4. 纹理量化与静态资产（中文）
 
 ```powershell
 python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512
@@ -48,7 +52,7 @@ python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.
 
 每张纹理转换为 RGB565 color plane（2 bytes/pixel）与 alpha4 plane（2 pixels/byte）。静态 C 生成物通常很大，而且可能是模型派生数据。它应由产品仓库或私有构建保存，不应默认提交到本项目。
 
-## 5. 自适应减面
+### 5. 自适应减面（中文）
 
 先构建 host helper：
 
@@ -69,7 +73,7 @@ cmake --build build --config Release --target el2d_mesh_simplify
 
 `--crop-profile bust` 是通用 drawable 级胸像裁剪启发式。它适合做首轮自动预算，但必须通过 host preview 和真机验收确认没有错误删除发型、手部或遮罩源。
 
-## 6. 验收
+### 6. 验收（中文）
 
 每套资产至少执行：
 
@@ -80,3 +84,88 @@ cmake --build build --config Release --target el2d_mesh_simplify
 5. 验证身体慢过渡与眨眼/口型快速增量层可以同时工作。
 
 PC 提取和减面只生成资产参数，不生成运行时动画帧。设备每一帧仍由本地网格补间与光栅器产生。
+
+# English
+
+## Asset Pipeline (English)
+
+### Principles (English)
+
+The asset pipeline must be reproducible and must not depend on manual retouching of individual images or manual adjustment of individual vertices. All cropping, texture dimensions, state sampling, mesh-reduction budgets, and error thresholds are expressed through command-line parameters or versionable profiles.
+
+Model license review is step zero of the pipeline. Repository examples use only synthetic data generated dynamically by tests.
+
+### 1. Prepare Inputs (English)
+
+Users must provide:
+
+- The `.model3.json` file and its referenced `.moc3`, textures, motions, and expressions.
+- A locally available drawable-evaluation backend whose license permits the intended use.
+- The list of state samples and parameter values for the final firmware.
+
+The official Web runtime path is read only from the local machine. The extractor uses a temporary HTTP server that maps only three explicit roots for the model, runtime, and host page; it does not expose the entire working drive to the browser.
+
+### 2. Extract the Base Snapshot (English)
+
+```powershell
+python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --motion-initial Idle:0 --output build\avatar.base.drawables.json
+```
+
+The output contains drawable IDs, vertices, UVs, indices, render order, texture index, opacity, culling, blend mode, and mask relationships.
+
+### 3. Sample States and Expressions Automatically (English)
+
+State snapshots use the same model and topology and change only the vertices and opacity produced by parameter evaluation:
+
+```powershell
+python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --parameter ParamAngleX=12 --parameter ParamBodyAngleX=4 --output build\avatar.turn.drawables.json
+```
+
+Expressions can be applied by name from `.model3.json`, with fast-path parameters overridden after the expression:
+
+```powershell
+python tools\extract_official_cubism_drawables.py path\to\Avatar.model3.json --runtime-dir local\cubism-web-runtime --expression Smile --post-parameter ParamEyeLOpen=1 --post-parameter ParamEyeROpen=1 --output build\avatar.smile.drawables.json
+```
+
+The generator checks every state snapshot against the base for compatibility of drawables, vertices, indices, and UVs. Conversion fails when topology is inconsistent instead of silently generating broken interpolation.
+
+### 4. Quantize Textures and Generate Static Assets (English)
+
+```powershell
+python tools\generate_el2d_mesh_asset.py --snapshot build\avatar.base.drawables.json --state-snapshot turn=build\avatar.turn.drawables.json --state-snapshot smile=build\avatar.smile.drawables.json --texture path\to\texture_00.png --output-header generated\avatar_asset.h --output-source generated\avatar_asset.cpp --symbol avatar_mesh_model --texture-size 512
+```
+
+Each texture is converted into an RGB565 color plane (2 bytes/pixel) and an alpha4 plane (2 pixels/byte). Generated static C assets are usually large and may contain model-derived data. They should be stored in the product repository or a private build and should not be committed to this project by default.
+
+### 5. Apply Adaptive Mesh Simplification (English)
+
+First build the host helper:
+
+```powershell
+cmake --build build --config Release --target el2d_mesh_simplify
+```
+
+Then add the following parameters to the generator:
+
+```text
+--lod-profile adaptive
+--lod-target-triangles 1800
+--meshoptimizer-helper build/Release/el2d_mesh_simplify.exe
+--optimized-snapshot-dir build/optimized
+```
+
+The adaptive profile locks ArtMesh boundaries and includes positions and UVs from the base and all state samples in the error metric. If the budget cannot be reached while protecting the boundaries, the report records `budget_met=false`. The caller should adjust the crop bounds or budget instead of accepting visible silhouette damage.
+
+`--crop-profile bust` is a general-purpose, drawable-level heuristic for bust cropping. It is suitable for a first automated budgeting pass, but host preview and on-device acceptance testing must confirm that it has not incorrectly removed hair, hands, or mask sources.
+
+### 6. Acceptance Testing (English)
+
+For every asset set, perform at least the following checks:
+
+1. Inspect the total and visible triangle counts, texture byte count, and `budget_met` value in the conversion report.
+2. On the host, use the same RGB565 rasterizer to generate previews of states and interpolated transitions.
+3. Verify masked eyes, hair boundaries, hand layering, and alpha blending.
+4. On the device, record uncached render P50/P95, stable-frame cache hits, PSRAM usage, and LCD transfer time.
+5. Verify that slow body transitions and fast additive blink/mouth-shape layers can operate simultaneously.
+
+PC extraction and mesh simplification generate only asset parameters, not runtime animation frames. Every device frame is still produced by local mesh interpolation and rasterization.
